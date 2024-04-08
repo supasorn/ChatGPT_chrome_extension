@@ -1,0 +1,24 @@
+{
+  "name": "ChatGPT",
+  "version": "1.0",
+  "description": "ChatGPT Proofreader",
+  "permissions": ["tabs", "activeTab"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*/*", "http://*/*" 
+      ],
+      "js": ["jquery-3.6.0.min.js", "script.js", "diff_match_patch.js"]
+    }
+  ],
+  "host_permissions":  [
+    "https://*/*", "http://*/*"
+  ],
+  "manifest_version": 3,
+  "icons": { "16": "icon16.png",
+           "48": "icon48.png",
+          "128": "icon128.png" }
+}
