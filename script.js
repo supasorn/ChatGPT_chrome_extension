@@ -59,10 +59,12 @@ $(document).ready(function() {
   chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.action === "insertText") {
       var textbox = $("#prompt-textarea");
+      // console.log($('td[_key="."]'));
+      // $('td[_key="."]').click();
       if (textbox && textbox.text() === ".") {
         $(textbox).val('check grammar: \n' + request.text);
         $(textbox).focus();
-        $(textbox).parent().find("button[data-testid='send-button']").click();
+        $(textbox).parent().find("button[data-testid='send-button']").mousedown().mouseup();
         // $(textbox).parents().append(html);
       }
     }
@@ -76,7 +78,6 @@ $(document).ready(function() {
     for (let i = 0; i < div.length; i++) {
       // check if div has the word "<END>", if so replace it with "REPLACED
       let text = $(div[i]).text();
-      console.log($(div[i]).html());
       let hotword = "<END>";
       if (text.includes(hotword)) {
         // get "revised" text between "REVISED:" and "<END>"
