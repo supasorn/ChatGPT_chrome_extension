@@ -82,7 +82,7 @@ $(document).ready(function() {
       if (text.includes(hotword)) {
         // get "revised" text between "REVISED:" and "<END>"
         let revised = text.substring(text.indexOf("REVISED:") + 8, text.indexOf(hotword));
-        let usertext = $(div[i]).closest("div.text-token-text-primary").prev().find("div[data-message-author-role='user']").text();
+        let usertext = $(div[i]).closest("article.text-token-text-primary").prev().find("div[data-message-author-role='user']").text();
         usertext = usertext.substring(usertext.indexOf(":") + 1);
 
         text = text.replace(hotword.trim(), usertext.trim());
@@ -92,7 +92,7 @@ $(document).ready(function() {
         dmp.diff_cleanupSemantic(diff);
         let html = prettyHtml(diff);
         $(div[i]).html($(div[i]).html().replace("&lt;END&gt;", ""));
-        $(div[i]).append('<div style="display: inline">DIFF:' + html + '</div>');
+        $(div[i]).append('<div class="markdown prose w-full break-words dark:prose-invert dark">DIFF:' + html + '</div>');
       }
     }
   }
