@@ -2,7 +2,7 @@
   "name": "ChatGPT",
   "version": "1.0",
   "description": "ChatGPT Proofreader",
-  "permissions": ["tabs", "activeTab"],
+  "permissions": ["tabs", "activeTab", "clipboardWrite"],
   "background": {
     "service_worker": "background.js"
   },
@@ -11,7 +11,7 @@
       "matches": [
         "https://*/*", "http://*/*" 
       ],
-      "js": ["jquery-3.6.0.min.js", "script.js", "diff_match_patch.js"]
+      "js": ["jquery-3.6.0.min.js", "script.js", "diff_match_patch.js", "clipboard.min.js"]
     }
   ],
   "host_permissions":  [

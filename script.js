@@ -24,15 +24,13 @@ prettyHtml = function(diffs) {
   return html.join('');
 };
 
+var isReceiverTab = false;
+
 $(document).ready(function() {
-  // $("form").keypress(function(event) {
-  // if (event.keyCode == 13 && !event.shiftKey) {
-  // console.log("done");
-  // submitForm(); //Submit your form here
-  // return false;
-  // }
-  // });
   $(document).mouseup(function(e) {
+    if (!isReceiverTab) 
+      return;
+
     var selectedText = "";
     if (window.getSelection) {
       selectedText = window.getSelection().toString();
@@ -40,29 +38,37 @@ $(document).ready(function() {
       selectedText = document.selection.createRange().text;
     }
     if (selectedText.length > 0) {
-      chrome.runtime.sendMessage({ action: "textSelected", text: selectedText });
-      console.log("message sent");
+      // chrome.runtime.sendMessage({ action: "textSelected", text: selectedText });
+      // console.log("message sent");
+      clipboard.copy("check grammar: " + selectedText);
     }
   });
 
   $(document).keydown(function(e) {
     if (e.key === 'M' && e.shiftKey && e.ctrlKey) {
       // Prevent default action to avoid any conflict with browser shortcuts
-      e.preventDefault();
+      // e.preventDefault();
       // Send a message to the background script to mark this tab as the receiver
-      console.log("mark target");
-      chrome.runtime.sendMessage({ action: "markReceiver", tabId: e.target });
+      // console.log("mark target");
+      // chrome.runtime.sendMessage({ action: "markReceiver", tabId: e.target });
+      // toggle the receiver tab
+      isReceiverTab = !isReceiverTab;
+      console.log(isReceiverTab ? "Receiver tab marked" : "Receiver tab unmarked");
     }
   });
 
 
   chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.action === "insertText") {
+      console.log("in");
       var textbox = $("#prompt-textarea");
       // console.log($('td[_key="."]'));
       // $('td[_key="."]').click();
+      console.log(textbox);
+      console.log(textbox.text());
       if (textbox && textbox.text() === ".") {
-        $(textbox).val('check grammar: \n' + request.text);
+        console.log("t", textbox);
+        $(textbox).html('check grammar: \n' + request.text);
         $(textbox).focus();
         $(textbox).parent().find("button[data-testid='send-button']").mousedown().mouseup();
         // $(textbox).parents().append(html);
@@ -82,7 +88,22 @@ $(document).ready(function() {
       if (text.includes(hotword)) {
         // get "revised" text between "REVISED:" and "<END>"
         let revised = text.substring(text.indexOf("REVISED:") + 8, text.indexOf(hotword));
-        let usertext = $(div[i]).closest("article.text-token-text-primary").prev().find("div[data-message-author-role='user']").text();
+
+        let currentblock = $(div[i]).closest("article.text-token-text-primary").prev();
+
+        const userdiv = "div[data-message-author-role='user']";
+        // if  doesn't exist or doesn't contain the symbol ":", keep going up
+        while (currentblock.find(userdiv).length === 0 || currentblock.find(userdiv).text().indexOf(":") === -1) {
+          currentblock = currentblock.prev();
+          if (currentblock.length === 0) {
+            break;
+          }
+        }
+        if (currentblock.length === 0) {
+          continue;
+        }
+        let usertext = currentblock.find(userdiv).text();
+
         usertext = usertext.substring(usertext.indexOf(":") + 1);
 
         text = text.replace(hotword.trim(), usertext.trim());
