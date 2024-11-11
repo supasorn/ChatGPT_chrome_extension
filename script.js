@@ -104,7 +104,8 @@ $(document).ready(function() {
         }
         let usertext = currentblock.find(userdiv).text();
 
-        usertext = usertext.substring(usertext.indexOf(":") + 1);
+        // find the string after the last ':'
+        usertext = usertext.substring(usertext.lastIndexOf(":") + 1);
 
         text = text.replace(hotword.trim(), usertext.trim());
 
