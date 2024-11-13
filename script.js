@@ -11,10 +11,12 @@ prettyHtml = function(diffs) {
         .replace(pattern_gt, '&gt;').replace(pattern_para, '<br>');
     switch (op) {
       case DIFF_INSERT:
-        html[x] = '<ins style="background-color: #62ff62; color:black">' + text + '</ins>';
+        // html[x] = '<ins style="background-color: #62ff62; color:black">' + text + '</ins>';
+        html[x] = '<ins style="color:#62ff62">' + text + '</ins>';
         break;
       case DIFF_DELETE:
-        html[x] = '<del style="background-color: #ff5151; color:black">' + text + '</del>';
+        // html[x] = '<del style="background-color: #ff5151; color:black">' + text + '</del>';
+        html[x] = '<del style="color:#ff5151">' + text + '</del>';
         break;
       case DIFF_EQUAL:
         html[x] = '<span>' + text + '</span>';
@@ -90,8 +92,8 @@ $(document).ready(function() {
         // get "revised" text between "REVISED:" and "<END>"
         let revised = text.substring(text.indexOf("REVISED:") + 8, text.indexOf(hotword));
 
-        // let currentblock = $(div[i]).closest("article.text-token-text-primary").prev();
-        let currentblock = $(div[i]).closest("li").prev();
+        let currentblock = $(div[i]).closest("article.text-token-text-primary").prev();
+        // let currentblock = $(div[i]).closest("li").prev();
 
         const userdiv = "div[data-message-author-role='user']";
         // if  doesn't exist or doesn't contain the symbol ":", keep going up
