@@ -79,6 +79,7 @@ $(document).ready(function() {
 
   function updateDiff() {
     // iterate over all div[data-message-author-role='assistant']
+    // let div = $("div[data-message-author-role='assistant']");
     let div = $("div[data-message-author-role='assistant']");
     // for each div, repeat its text
     for (let i = 0; i < div.length; i++) {
@@ -89,7 +90,8 @@ $(document).ready(function() {
         // get "revised" text between "REVISED:" and "<END>"
         let revised = text.substring(text.indexOf("REVISED:") + 8, text.indexOf(hotword));
 
-        let currentblock = $(div[i]).closest("article.text-token-text-primary").prev();
+        // let currentblock = $(div[i]).closest("article.text-token-text-primary").prev();
+        let currentblock = $(div[i]).closest("li").prev();
 
         const userdiv = "div[data-message-author-role='user']";
         // if  doesn't exist or doesn't contain the symbol ":", keep going up
@@ -105,7 +107,9 @@ $(document).ready(function() {
         let usertext = currentblock.find(userdiv).text();
 
         // find the string after the last ':'
-        usertext = usertext.substring(usertext.lastIndexOf(":") + 1);
+        console.log(usertext);
+        usertext = usertext.substring(usertext.lastIndexOf(":\n") + 1);
+        // usertext = usertext.substring(usertext.lastIndexOf(":") + 1);
 
         text = text.replace(hotword.trim(), usertext.trim());
 
@@ -123,10 +127,12 @@ $(document).ready(function() {
   // setTimeout(function() {
   // }, 5000);
   var timer;
+  console.log("start");
   const observer = new MutationObserver((mutations) => {
     // reset timer and start count down again
     clearTimeout(timer);
     timer = setTimeout(() => {
+      console.log("update");
       updateDiff();
     }, 1000);
   });
