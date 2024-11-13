@@ -11,10 +11,10 @@ prettyHtml = function(diffs) {
         .replace(pattern_gt, '&gt;').replace(pattern_para, '<br>');
     switch (op) {
       case DIFF_INSERT:
-        html[x] = '<ins style="color:#00BB00">' + text + '</ins>';
+        html[x] = '<ins style="background-color: #62ff62; color:black">' + text + '</ins>';
         break;
       case DIFF_DELETE:
-        html[x] = '<del style="color:red">' + text + '</del>';
+        html[x] = '<del style="background-color: #ff5151; color:black">' + text + '</del>';
         break;
       case DIFF_EQUAL:
         html[x] = '<span>' + text + '</span>';
