@@ -8,7 +8,7 @@ prettyHtml = function(diffs) {
     var op = diffs[x][0];    // Operation (insert, delete, equal)
     var data = diffs[x][1];  // Text of change.
     var text = data.replace(pattern_amp, '&amp;').replace(pattern_lt, '&lt;')
-        .replace(pattern_gt, '&gt;').replace(pattern_para, '<br>');
+      .replace(pattern_gt, '&gt;').replace(pattern_para, '<br>');
     switch (op) {
       case DIFF_INSERT:
         // html[x] = '<ins style="background-color: #62ff62; color:black">' + text + '</ins>';
@@ -30,8 +30,10 @@ var isReceiverTab = false;
 
 $(document).ready(function() {
   $(document).mouseup(function(e) {
-    if (!isReceiverTab) 
+    // if the url doesn't contain overleaf.com or v26, return
+    if (!window.location.href.includes("overleaf.com") && !window.location.href.includes("v26")) {
       return;
+    }
 
     var selectedText = "";
     if (window.getSelection) {
@@ -39,20 +41,72 @@ $(document).ready(function() {
     } else if (document.selection && document.selection.type != "Control") {
       selectedText = document.selection.createRange().text;
     }
+    console.log("selected text:", selectedText);
     if (selectedText.length > 0) {
-      // chrome.runtime.sendMessage({ action: "textSelected", text: selectedText });
-      // console.log("message sent");
-      clipboard.copy("check grammar: " + selectedText);
+      if ($("#popup-div").length == 0) {
+        let popupDiv = $("<div id='popup-div' class='bg-white shadow-lg rounded p-2'></div>");
+        popupDiv.css({
+          position: "absolute",
+          zIndex: 1000,
+          display: "flex",
+          flexDirection: "column",
+          gap: "2px"
+        });
+
+        let sharedStyle = 'padding: 0px 5px; margin: 2px 0; border-radius: 4px;';
+        // Button configurations
+        const buttons = [
+          { id: 'check-grammar-button', text: 'Check Grammar', style: 'background-color: #3b82f6; color: white;' + sharedStyle },
+          { id: 'refine-button', text: 'Refine', style: 'background-color: #10b981; color: white;' + sharedStyle },
+          { id: 'make-concise-button', text: 'Make Concise', style: 'background-color: #f97316; color: white;' + sharedStyle },
+        ];
+
+        // Create buttons dynamically
+        buttons.forEach(({ id, text, style }) => {
+          let button = $(`<button id='${id}'>${text}</button>`);
+          button.attr('style', style); // Apply inline styles directly
+          button.data('action', text); // Store action in data attribute
+          popupDiv.append(button);
+        });
+
+        $("body").append(popupDiv);
+      }
+
+      let popupDiv = $("#popup-div");
+      popupDiv.css({
+        left: e.pageX + "px",
+        top: e.pageY + "px",
+      });
+      popupDiv.show();
+      // show the popup, and fade out after 5 seconds if the cursor is not on the popup
+      setTimeout(function() {
+        popupDiv.fadeOut(200);
+      }, 2000);
+
+      // Add a single click event listener for all buttons
+      $("#popup-div button").click(function() {
+        const text = $(this).data('action') + ": " + selectedText;
+        chrome.runtime.sendMessage({ action: "textSelected", text: text });
+        console.log(`${text} message sent`);
+        popupDiv.hide();
+      });
     }
   });
 
+  $(document).mousedown(function(e) {
+    // if it's not clicking on the popup div, hide it
+    if (!$(e.target).closest("#popup-div").length) {
+      $("#popup-div").hide();
+    }
+  });
+  //
   $(document).keydown(function(e) {
     if (e.key === 'M' && e.shiftKey && e.ctrlKey) {
       // Prevent default action to avoid any conflict with browser shortcuts
       // e.preventDefault();
       // Send a message to the background script to mark this tab as the receiver
       // console.log("mark target");
-      // chrome.runtime.sendMessage({ action: "markReceiver", tabId: e.target });
+      chrome.runtime.sendMessage({ action: "markReceiver", tabId: e.target });
       // toggle the receiver tab
       isReceiverTab = !isReceiverTab;
       console.log(isReceiverTab ? "Receiver tab marked" : "Receiver tab unmarked");
@@ -62,19 +116,12 @@ $(document).ready(function() {
 
   chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.action === "insertText") {
-      console.log("in");
       var textbox = $("#prompt-textarea");
-      // console.log($('td[_key="."]'));
-      // $('td[_key="."]').click();
-      console.log(textbox);
-      console.log(textbox.text());
-      if (textbox && textbox.text() === ".") {
-        console.log("t", textbox);
-        $(textbox).html('check grammar: \n' + request.text);
-        $(textbox).focus();
-        $(textbox).parent().find("button[data-testid='send-button']").mousedown().mouseup();
-        // $(textbox).parents().append(html);
-      }
+      $(textbox).html(request.text);
+      // add 0.5 delay before sending the message
+      setTimeout(function() {
+        $("button[data-testid='send-button']").click();
+      }, 500);
     }
   });
 
