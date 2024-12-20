@@ -2,7 +2,7 @@
   "name": "ChatGPT",
   "version": "1.1",
   "description": "ChatGPT Proofreader",
-  "permissions": ["tabs", "activeTab", "clipboardWrite"],
+  "permissions": ["tabs", "activeTab", "clipboardWrite", "storage"],
   "background": {
     "service_worker": "background.js"
   },

@@ -28,77 +28,103 @@ prettyHtml = function(diffs) {
 
 var isReceiverTab = false;
 
+var selectedText = "";
+var watch = 0;
+var cursor;
+function sendToGPT(prompt, text) {
+  const ctext = "<p>" + prompt + ":</p><p>" + text + "</p>";
+  chrome.runtime.sendMessage({ action: "textSelected", text: ctext });
+  console.log(`${ctext} message sent`);
+}
+function popupDiv(e) {
+  if ($("#popup-div").length == 0) {
+    let popupDiv = $("<div id='popup-div' class='bg-white shadow-lg rounded p-2'></div>");
+    popupDiv.css({
+      position: "absolute",
+      zIndex: 1000,
+      display: "flex",
+      flexDirection: "column",
+      gap: "2px"
+    });
+
+    let sharedStyle = 'padding: 0px 5px; margin: 2px 0; border-radius: 4px;';
+    // Button configurations
+    const buttons = [
+      { id: 'check-grammar-button', text: 'Check Grammar', style: 'background-color: #3b82f6; color: white;' + sharedStyle },
+      { id: 'refine-button', text: 'Refine', style: 'background-color: #10b981; color: white;' + sharedStyle },
+      { id: 'make-concise-button', text: 'Make Concise', style: 'background-color: #f97316; color: white;' + sharedStyle },
+    ];
+
+    // Create buttons dynamically
+    buttons.forEach(({ id, text, style }) => {
+      let button = $(`<button id='${id}'>${text}</button>`);
+      button.attr('style', style); // Apply inline styles directly
+      button.data('action', text); // Store action in data attribute
+      popupDiv.append(button);
+    });
+
+    $("body").append(popupDiv);
+  }
+
+  let popupDiv = $("#popup-div");
+  popupDiv.css({
+    left: e.pageX + "px",
+    top: e.pageY + "px",
+  });
+  popupDiv.show();
+  // show the popup, and fade out after 5 seconds if the cursor is not on the popup
+  setTimeout(function() {
+    popupDiv.fadeOut(200);
+  }, 3000);
+
+  // Add a single click event listener for all buttons
+  $("#popup-div button").off("click").click(function() {
+    sendToGPT($(this).data('action'), selectedText);
+    popupDiv.hide();
+  });
+}
 $(document).ready(function() {
-  $(document).mouseup(function(e) {
-    // if the url doesn't contain overleaf.com or v26, return
-    if (!window.location.href.includes("overleaf.com") && !window.location.href.includes("v26")) {
-      return;
-    }
+  const enableMouse = false;
+  if (enableMouse) {
+    $(document).mousemove(function(e) {
+      if (watch == 1) {
+        // check if cursor has moved down for 50pixels
+        if (e.pageY - cursor.pageY > 30) {
+          watch = 0;
+          popupDiv(e);
+        }
+      }
+    });
 
-    var selectedText = "";
-    if (window.getSelection) {
-      selectedText = window.getSelection().toString();
-    } else if (document.selection && document.selection.type != "Control") {
-      selectedText = document.selection.createRange().text;
-    }
-    console.log("selected text:", selectedText);
-    if (selectedText.length > 0) {
-      if ($("#popup-div").length == 0) {
-        let popupDiv = $("<div id='popup-div' class='bg-white shadow-lg rounded p-2'></div>");
-        popupDiv.css({
-          position: "absolute",
-          zIndex: 1000,
-          display: "flex",
-          flexDirection: "column",
-          gap: "2px"
-        });
-
-        let sharedStyle = 'padding: 0px 5px; margin: 2px 0; border-radius: 4px;';
-        // Button configurations
-        const buttons = [
-          { id: 'check-grammar-button', text: 'Check Grammar', style: 'background-color: #3b82f6; color: white;' + sharedStyle },
-          { id: 'refine-button', text: 'Refine', style: 'background-color: #10b981; color: white;' + sharedStyle },
-          { id: 'make-concise-button', text: 'Make Concise', style: 'background-color: #f97316; color: white;' + sharedStyle },
-        ];
-
-        // Create buttons dynamically
-        buttons.forEach(({ id, text, style }) => {
-          let button = $(`<button id='${id}'>${text}</button>`);
-          button.attr('style', style); // Apply inline styles directly
-          button.data('action', text); // Store action in data attribute
-          popupDiv.append(button);
-        });
-
-        $("body").append(popupDiv);
+    $(document).mouseup(function(e) {
+      // if the url doesn't contain overleaf.com or v26, return
+      if (!window.location.href.includes("overleaf.com") && !window.location.href.includes("v26")) {
+        return;
       }
 
-      let popupDiv = $("#popup-div");
-      popupDiv.css({
-        left: e.pageX + "px",
-        top: e.pageY + "px",
-      });
-      popupDiv.show();
-      // show the popup, and fade out after 5 seconds if the cursor is not on the popup
-      setTimeout(function() {
-        popupDiv.fadeOut(200);
-      }, 2000);
+      selectedText = "";
+      if (window.getSelection) {
+        selectedText = window.getSelection().toString();
+      } else if (document.selection && document.selection.type != "Control") {
+        selectedText = document.selection.createRange().text;
+      }
+      console.log("selected text:", selectedText);
+      if (selectedText.length > 10) {
+        watch = 1;
+        cursor = e;
+        setTimeout(function() {
+          watch = 0;
+        }, 1000);
+      }
+    }); 
 
-      // Add a single click event listener for all buttons
-      $("#popup-div button").click(function() {
-        const text = $(this).data('action') + ": " + selectedText;
-        chrome.runtime.sendMessage({ action: "textSelected", text: text });
-        console.log(`${text} message sent`);
-        popupDiv.hide();
-      });
-    }
-  });
-
-  $(document).mousedown(function(e) {
-    // if it's not clicking on the popup div, hide it
-    if (!$(e.target).closest("#popup-div").length) {
-      $("#popup-div").hide();
-    }
-  });
+    $(document).mousedown(function(e) {
+      // if it's not clicking on the popup div, hide it
+      if (!$(e.target).closest("#popup-div").length) {
+        $("#popup-div").hide();
+      }
+    });
+  }
   //
   $(document).keydown(function(e) {
     if (e.key === 'M' && e.shiftKey && e.ctrlKey) {
@@ -111,17 +137,37 @@ $(document).ready(function() {
       isReceiverTab = !isReceiverTab;
       console.log(isReceiverTab ? "Receiver tab marked" : "Receiver tab unmarked");
     }
+    // if ctrl+s or ctrl+r or ctrl+c
+    if (e.ctrlKey && (e.key === 's' || e.key === 'r' || e.key === 'c')) {
+      var sel = "";
+      if (window.getSelection) {
+        sel = window.getSelection().toString();
+      } else if (document.selection && document.selection.type != "Control") {
+        sel = document.selection.createRange().text;
+      }
+      if (e.key === 's') {
+        sendToGPT("make concise", sel);
+      } else if (e.key == 'r') {
+        sendToGPT("refine", sel); 
+      } else if (e.key == 'c') {
+        sendToGPT("check grammar", sel);
+      }
+    }
+    // if (e.key === 'c' && e.ctrlKey) {
+      // popupDiv(e);
+    // }
   });
 
 
   chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    console.log("message received", request);
     if (request.action === "insertText") {
       var textbox = $("#prompt-textarea");
       $(textbox).html(request.text);
       // add 0.5 delay before sending the message
       setTimeout(function() {
         $("button[data-testid='send-button']").click();
-      }, 500);
+      }, 100);
     }
   });
 
