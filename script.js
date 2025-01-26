@@ -26,7 +26,7 @@ prettyHtml = function(diffs) {
   return html.join('');
 };
 
-var isReceiverTab = false;
+// var isReceiverTab = false;
 
 var selectedText = "";
 var watch = 0;
@@ -116,7 +116,7 @@ $(document).ready(function() {
           watch = 0;
         }, 1000);
       }
-    }); 
+    });
 
     $(document).mousedown(function(e) {
       // if it's not clicking on the popup div, hide it
@@ -128,15 +128,9 @@ $(document).ready(function() {
   //
   $(document).keydown(function(e) {
     if (e.key === 'M' && e.shiftKey && e.ctrlKey) {
-      // Prevent default action to avoid any conflict with browser shortcuts
-      // e.preventDefault();
-      // Send a message to the background script to mark this tab as the receiver
-      // console.log("mark target");
-      chrome.runtime.sendMessage({ action: "markReceiver", tabId: e.target });
-      // toggle the receiver tab
-      isReceiverTab = !isReceiverTab;
-      console.log(isReceiverTab ? "Receiver tab marked" : "Receiver tab unmarked");
+      chrome.runtime.sendMessage({ action: "markReceiver" });
     }
+
     // if ctrl+s or ctrl+r or ctrl+c
     if (e.ctrlKey && (e.key === 's' || e.key === 'r' || e.key === 'c')) {
       var sel = "";
@@ -148,13 +142,13 @@ $(document).ready(function() {
       if (e.key === 's') {
         sendToGPT("make concise", sel);
       } else if (e.key == 'r') {
-        sendToGPT("refine", sel); 
+        sendToGPT("refine", sel);
       } else if (e.key == 'c') {
         sendToGPT("check grammar", sel);
       }
     }
     // if (e.key === 'c' && e.ctrlKey) {
-      // popupDiv(e);
+    // popupDiv(e);
     // }
   });
 
@@ -216,22 +210,43 @@ $(document).ready(function() {
         $(div[i]).append('<div class="markdown prose w-full break-words dark:prose-invert dark">DIFF:' + html + '</div>');
       }
     }
+
+    if ($("#writeright_marker").length === 0) {
+      const div = $("main div[type='button']").first();
+
+      if (div.length === 0) {
+        return;
+      }
+      let markButton = $("<div class='flex' id='writeright_marker' style='cursor: pointer; background-color: orange; color: black; padding: 2px 5px; border-radius: 5px;'>Mark Receiver</div>");
+      div.after(markButton);
+
+      $(document).on("click", "#writeright_marker", function(e) {
+        chrome.runtime.sendMessage({ action: "markReceiver" });
+        $(this).text("Marked");
+        $(this).css("background-color", "red");
+        setTimeout(() => {
+          $(this).text("Mark Receiver");
+          $(this).css("background-color", "orange");
+        }, 1000);
+      });
+    }
   }
 
-  // wait 5 seconds before calling
-  // setTimeout(function() {
-  // }, 5000);
-  var timer;
-  console.log("start");
-  const observer = new MutationObserver((mutations) => {
-    // reset timer and start count down again
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      console.log("update");
-      updateDiff();
-    }, 1000);
-  });
+  // if this is chatgpt.com
+  if (window.location.href.includes("chatgpt.com") && window.location.href.includes("writeright")) {
+    var timer;
+    console.log("this is chatgpt's writeright");
+    const observer = new MutationObserver((mutations) => {
+      // reset timer and start count down again
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        console.log("update");
+        updateDiff();
+      }, 1000);
+    });
+    chrome.runtime.sendMessage({ action: "markReceiver" });
 
-  observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
 
 });
