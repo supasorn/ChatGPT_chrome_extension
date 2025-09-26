@@ -84,6 +84,7 @@ function popupDiv(e) {
   });
 }
 $(document).ready(function() {
+  console.log("script loaded");
   const enableMouse = false;
   if (enableMouse) {
     $(document).mousemove(function(e) {
@@ -98,7 +99,7 @@ $(document).ready(function() {
 
     $(document).mouseup(function(e) {
       // if the url doesn't contain overleaf.com or v26, return
-      if (!window.location.href.includes("overleaf.com") && !window.location.href.includes("v26")) {
+      if (!window.location.href.includes("overleaf.com") && !window.location.href.includes("v26") && !window.location.href.includes("docs.google.com")) {
         return;
       }
 
@@ -132,18 +133,18 @@ $(document).ready(function() {
     }
 
     // if ctrl+s or ctrl+r or ctrl+c
-    if (e.ctrlKey && (e.key === 's' || e.key === 'r' || e.key === 'c')) {
+    if (e.ctrlKey && (e.key === '1' || e.key === '2' || e.key === '3')) {
       var sel = "";
       if (window.getSelection) {
         sel = window.getSelection().toString();
       } else if (document.selection && document.selection.type != "Control") {
         sel = document.selection.createRange().text;
       }
-      if (e.key === 's') {
+      if (e.key == '3') {
         sendToGPT("make concise", sel);
-      } else if (e.key == 'r') {
+      } else if (e.key == '2') {
         sendToGPT("refine", sel);
-      } else if (e.key == 'c') {
+      } else if (e.key == '1') {
         sendToGPT("check grammar", sel);
       }
     }
